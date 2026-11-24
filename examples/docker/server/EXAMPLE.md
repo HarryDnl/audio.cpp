@@ -96,3 +96,51 @@ docker compose -f qwen3-tts-cpu.yml up
 
 This sends a request to `http://localhost:8080/v1/audio/speech` with voice
 cloning parameters and saves the result to `output/speech.wav`.
+
+## Higgs Audio v3 TTS
+
+The Higgs Audio v3 TTS weights use a research/non-commercial license. Check
+the [model license notes](../../../docs/model_licenses.md) before deploying it.
+
+### 1. Download the model
+
+From the repository root, install the recommended Q8_0 package into the
+Docker examples model directory:
+
+```bash
+python3 tools/model_manager_v2.py install \
+  --models-root examples/docker/models higgs_audio_tts_4b_q8_0
+```
+
+For voice cloning, create `examples/docker/references/` and place a reference
+WAV there.
+
+### 2. Start the server
+
+From this directory, choose either CUDA or CPU:
+
+```bash
+docker compose -f higgs-audio-v3-cuda12.yml up
+# Or, without a usable NVIDIA GPU:
+docker compose -f higgs-audio-v3-cpu.yml up
+```
+
+The server is available at `http://localhost:49112`. CPU inference is supported,
+but will be substantially slower; the Q8 model weights alone are about 5 GB, so
+leave additional system RAM for inference.
+
+### 3. Generate speech
+
+```bash
+curl -f http://localhost:49112/v1/audio/speech \
+  -H 'Content-Type: application/json' \
+  -o higgs-audio-v3.wav \
+  -d '{
+    "model": "higgs-v3",
+    "input": "Hello from Higgs Audio.",
+    "voice_ref": "/references/ref.wav",
+    "reference_text": "The words spoken in the reference audio."
+  }'
+```
+
+Omit `voice_ref` and `reference_text` to generate without reference audio.
