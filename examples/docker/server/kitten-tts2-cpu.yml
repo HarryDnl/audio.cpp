@@ -1,0 +1,20 @@
+services:
+  audiocpp-server:
+    image: ghcr.io/0xshug0/audio.cpp:full-cpu
+    user: "${AUDIOCPP_UID:-1000}:${AUDIOCPP_GID:-1000}"
+    restart: unless-stopped
+    stop_grace_period: 30s
+    ports:
+      - "49112:8080"
+    volumes:
+      - ./../models:/models:ro
+      - ./../references:/references:ro
+      - ./kitten-tts2-server.json:/app/server.json:ro
+      - /tmp/audio-cpp-kitten-logs:/logs
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    command: ["server", "--config", "/app/server.json", "--backend", "cpu", "--log", "--log-file", "/logs/server.log"]

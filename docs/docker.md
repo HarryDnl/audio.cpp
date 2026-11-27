@@ -198,6 +198,7 @@ demonstrate how to run the audio.cpp CLI with `docker run`. The examples include
 
 - **PocketTTS:** Text-to-Speech
 - **Qwen3-TTS:** Text-to-Speech with Voice Cloning
+- **Kitten TTS 2:** Text-to-Speech with preset voices and voice cloning
 
 ### Server
 

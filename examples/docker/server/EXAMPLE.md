@@ -144,3 +144,61 @@ curl -f http://localhost:49112/v1/audio/speech \
 ```
 
 Omit `voice_ref` and `reference_text` to generate without reference audio.
+
+## Kitten TTS 2
+
+### 1. Download the model
+
+From the repository root, install the recommended Q8_0 package into the Docker
+examples model directory:
+
+```bash
+python3 tools/model_manager_v2.py install \
+  --models-root examples/docker/models kitten_tts2
+```
+
+### 2. Start the CPU server
+
+```bash
+mkdir -p /tmp/audio-cpp-kitten-logs
+AUDIOCPP_UID="$(id -u)" AUDIOCPP_GID="$(id -g)" \
+  docker compose -f kitten-tts2-cpu.yml up
+```
+
+No GPU is required. The server is available at `http://localhost:49113`; CPU
+inference can be slower, and the Q8 model weights alone are about 3.34 GB.
+Detailed server logs are written to `/tmp/audio-cpp-kitten-logs/server.log` on
+the host. The Compose service runs with the host UID/GID so it can write to the
+mounted directory. If you have already created that directory under a different
+user, make it writable by the UID/GID used to start Compose.
+
+```bash
+tail -f /tmp/audio-cpp-kitten-logs/server.log
+```
+
+Container stdout and stderr are still available with:
+
+```bash
+docker compose -f kitten-tts2-cpu.yml logs -f audiocpp-server
+```
+
+### 3. Generate speech
+
+The audio.cpp server exposes an OpenAI-style `POST /v1/audio/speech` endpoint.
+It accepts the standard `model`, `input`, and `voice` fields, and returns WAV
+audio by default:
+
+```bash
+curl -f http://localhost:49113/v1/audio/speech \
+  -H 'Content-Type: application/json' \
+  -o kitten-tts2.wav \
+  -d '{
+    "model": "kitten-tts2",
+    "input": "Hello from Kitten TTS 2.",
+    "voice": "Bruno"
+  }'
+```
+
+Kitten-specific controls can be supplied under `options`. For voice cloning,
+mount a reference WAV under `../references/` and pass its container path in
+`voice_ref`, along with its transcript in `reference_text`.
